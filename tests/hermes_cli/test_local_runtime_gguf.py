@@ -71,3 +71,21 @@ def test_reader_sizes_mxfp4_tensor_blocks(tmp_path):
 
     assert header.tensor_bytes == 34
     assert header.embd_table_bytes == header.tensor_bytes
+
+
+def test_reader_sizes_nvfp4_tensor_blocks(tmp_path):
+    """NVFP4 stores 64 elements in one 36-byte block (ggml-common.h block_nvfp4)."""
+    name = b"token_embd.weight"
+    gguf = tmp_path / "nvfp4.gguf"
+    gguf.write_bytes(
+        b"GGUF"
+        + struct.pack("<IQQ", 3, 1, 0)
+        + struct.pack("<Q", len(name))
+        + name
+        + struct.pack("<IQIQ", 1, 128, 40, 0)
+    )
+
+    header = read_gguf_header(gguf)
+
+    assert header.tensor_bytes == 72
+    assert header.embd_table_bytes == header.tensor_bytes
